@@ -33,7 +33,6 @@ public class SaveFileResponseParser implements ResponseParser<File> {
 
             return this.destFile;
         } else {
-            System.out.println(new StringResponseParser().parse(client, request, responseCode, stream, headers, contentType, charset));
             return null;
         }
     }
