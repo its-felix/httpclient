@@ -122,8 +122,10 @@ public class Request {
         }
 
         T charset(Charset charset);
+        T parameters(Map<String, String> parameters);
         T parameter(String key, String value);
         T parameter(String key);
+        T headers(Map<String, String> headers);
         T header(String key, String value);
         Template template();
         Request build();
@@ -177,6 +179,12 @@ public class Request {
         }
 
         @Override
+        public T parameters(Map<String, String> parameters) {
+            this.urlParameters.putAll(parameters);
+            return self();
+        }
+
+        @Override
         public T parameter(String key, String value) {
             this.urlParameters.put(key, value);
             return self();
@@ -185,6 +193,12 @@ public class Request {
         @Override
         public T parameter(String key) {
             return parameter(key, null);
+        }
+
+        @Override
+        public T headers(Map<String, String> headers) {
+            this.headers.putAll(headers);
+            return self();
         }
 
         @Override
@@ -219,17 +233,10 @@ public class Request {
 
         @Override
         public T enrich() {
-            T builder = createBuilder(this.endpoint, this.method).charset(this.charset);
-
-            for (Map.Entry<String, String> entry : this.urlParameters.entrySet()) {
-                builder = builder.parameter(entry.getKey(), entry.getValue());
-            }
-
-            for (Map.Entry<String, String> entry : this.headers.entrySet()) {
-                builder = builder.header(entry.getKey(), entry.getValue());
-            }
-
-            return builder;
+            return createBuilder(this.endpoint, this.method)
+                    .charset(this.charset)
+                    .parameters(this.urlParameters)
+                    .headers(this.headers);
         }
 
         protected abstract T createBuilder(Endpoint endpoint, RequestMethod method);
