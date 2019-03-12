@@ -13,7 +13,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.Charset;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -73,13 +73,12 @@ public class Request {
 
         if (!this.urlParameters.isEmpty()) {
             String query = url.getQuery();
-            if (query == null) {
-                query = "";
-            }
 
-            query += this.urlParameters.entrySet().stream()
-                    .map(this::buildParameter)
-                    .collect(Collectors.joining("&"));
+            if (query == null || query.isEmpty()) {
+                query = buildQueryString();
+            } else {
+                query += "&" + buildQueryString();
+            }
 
             try {
                 url = new URL(url.getProtocol(), url.getHost(), url.getPort(), url.getPath() + "?" + query);
@@ -89,6 +88,12 @@ public class Request {
         }
 
         return url;
+    }
+
+    private String buildQueryString() {
+        return this.urlParameters.entrySet().stream()
+                .map(this::buildParameter)
+                .collect(Collectors.joining("&"));
     }
 
     private String buildParameter(Map.Entry<String, String> entry) {
@@ -112,33 +117,56 @@ public class Request {
 
     public interface Builder<T extends Builder<T>> {
 
+        static Builder<?> create(Endpoint endpoint, RequestMethod method) {
+            return new BuilderImpl(endpoint, method);
+        }
+
         T charset(Charset charset);
         T parameter(String key, String value);
         T parameter(String key);
         T header(String key, String value);
+        Template template();
         Request build();
+    }
+
+    public interface Template {
+
+        Builder<?> enrich();
+        default Request build() {
+            return enrich().build();
+        }
     }
 
     public interface BuilderWithBody<T extends BuilderWithBody<T>> extends Builder<T> {
 
+        static BuilderWithBody<?> create(Endpoint endpoint, RequestMethod method) {
+            return new BuilderWithBodyImpl(endpoint, method);
+        }
+
+        TemplateWithBody template();
         T body(RequestBody body);
+    }
+
+    public interface TemplateWithBody extends Template {
+
+        BuilderWithBody<?> enrich();
     }
 
     private static abstract class ABuilder<T extends ABuilder<T>> implements Builder<T> {
 
-        private final Endpoint endpoint;
-        private final RequestMethod method;
-        private Charset charset;
-        private Map<String, String> urlParameters;
-        private Map<String, String> headers;
+        protected final Endpoint endpoint;
+        protected final RequestMethod method;
+        protected Charset charset;
+        protected Map<String, String> urlParameters;
+        protected Map<String, String> headers;
         protected RequestBody body;
 
         public ABuilder(Endpoint endpoint, RequestMethod method) {
             this.endpoint = endpoint;
             this.method = method;
             this.charset = Charset.defaultCharset();
-            this.urlParameters = new HashMap<>();
-            this.headers = new HashMap<>();
+            this.urlParameters = new LinkedHashMap<>();
+            this.headers = new LinkedHashMap<>();
             this.body = null;
         }
 
@@ -173,10 +201,51 @@ public class Request {
         protected abstract T self();
     }
 
-    public static class BuilderImpl extends ABuilder<BuilderImpl> {
+    private static abstract class ATemplate<T extends Builder<T>> implements Template {
+
+        protected final Endpoint endpoint;
+        protected final RequestMethod method;
+        protected final Charset charset;
+        protected final Map<String, String> urlParameters;
+        protected final Map<String, String> headers;
+        protected final RequestBody body;
+
+        public ATemplate(Endpoint endpoint, RequestMethod method, Charset charset, Map<String, String> urlParameters, Map<String, String> headers, RequestBody body) {
+            this.endpoint = endpoint;
+            this.method = method;
+            this.charset = charset;
+            this.urlParameters = urlParameters;
+            this.headers = headers;
+            this.body = body;
+        }
+
+        @Override
+        public T enrich() {
+            T builder = createBuilder().charset(this.charset);
+
+            for (Map.Entry<String, String> entry : this.urlParameters.entrySet()) {
+                builder = builder.parameter(entry.getKey(), entry.getValue());
+            }
+
+            for (Map.Entry<String, String> entry : this.headers.entrySet()) {
+                builder = builder.header(entry.getKey(), entry.getValue());
+            }
+
+            return builder;
+        }
+
+        protected abstract T createBuilder();
+    }
+
+    private static class BuilderImpl extends ABuilder<BuilderImpl> {
 
         public BuilderImpl(Endpoint endpoint, RequestMethod method) {
             super(endpoint, method);
+        }
+
+        @Override
+        public Template template() {
+            return new TemplateImpl(this.endpoint, this.method, this.charset, this.urlParameters, this.headers, this.body);
         }
 
         @Override
@@ -185,7 +254,19 @@ public class Request {
         }
     }
 
-    public static class BuilderWithBodyImpl extends ABuilder<BuilderWithBodyImpl> implements BuilderWithBody<BuilderWithBodyImpl> {
+    private static class TemplateImpl extends ATemplate<BuilderImpl> {
+
+        public TemplateImpl(Endpoint endpoint, RequestMethod method, Charset charset, Map<String, String> urlParameters, Map<String, String> headers, RequestBody body) {
+            super(endpoint, method, charset, urlParameters, headers, body);
+        }
+
+        @Override
+        protected BuilderImpl createBuilder() {
+            return new BuilderImpl(this.endpoint, this.method);
+        }
+    }
+
+    private static class BuilderWithBodyImpl extends ABuilder<BuilderWithBodyImpl> implements BuilderWithBody<BuilderWithBodyImpl> {
 
         public BuilderWithBodyImpl(Endpoint endpoint, RequestMethod method) {
             super(endpoint, method);
@@ -199,8 +280,30 @@ public class Request {
         }
 
         @Override
+        public TemplateWithBody template() {
+            return new TemplateWithBodyImpl(this.endpoint, this.method, this.charset, this.urlParameters, this.headers, this.body);
+        }
+
+        @Override
         protected BuilderWithBodyImpl self() {
             return this;
+        }
+    }
+
+    private static class TemplateWithBodyImpl extends ATemplate<BuilderWithBodyImpl> implements TemplateWithBody {
+
+        public TemplateWithBodyImpl(Endpoint endpoint, RequestMethod method, Charset charset, Map<String, String> urlParameters, Map<String, String> headers, RequestBody body) {
+            super(endpoint, method, charset, urlParameters, headers, body);
+        }
+
+        @Override
+        public BuilderWithBodyImpl enrich() {
+            return super.enrich().body(this.body);
+        }
+
+        @Override
+        protected BuilderWithBodyImpl createBuilder() {
+            return new BuilderWithBodyImpl(this.endpoint, this.method);
         }
     }
 }
