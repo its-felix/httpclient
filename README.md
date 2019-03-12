@@ -30,7 +30,7 @@ Endpoint endpoint = Endpoint.forHost("some-host.com").resolve("my", "endpoint");
 Endpoint endpoint = ...;
 
 // This creates a simple GET-Request against the endpoint
-Request request = endpoint.buildGetRequest().build();
+Request request = endpoint.getRequest().build();
 ```
 
 ### Step 3.2: GET-Request with parameters
@@ -38,7 +38,7 @@ Request request = endpoint.buildGetRequest().build();
 Endpoint endpoint = ...;
 
 // The resulting request will use the query string "?my-parameter=some-value&parameter-without-value"
-Request request = endpoint.buildGetRequest()
+Request request = endpoint.getRequest()
     .parameter("my-parameter", "some-value")
     .parameter("parameter-without-value")
     .build();
@@ -51,10 +51,25 @@ File theFileYouWantToUpload = ...;
 
 // This request will upload the given file using the FormData name "file"
 // The file will be read when the Request is executed
-Request request = endpoint.buildPostRequest()
+Request request = endpoint.postRequest()
     .body(new FormDataRequestBody(Collections.singleton(
             FormDataParameter.forFile("file", theFileYouWantToUpload)
     )))
+    .build();
+```
+
+### Step 3.x: Building a RequestTemplate
+You can also build a Template for a Request that you can enrich with some more parameters, headers or another body afterwards.
+
+Example:
+```java
+Endpoint endpoint = ...;
+Request.Template template = endpoint.getRequest()
+    .parameter("some-fix-parameter", "value")
+    .template();
+
+Request request = template.enrich()
+    .parameter("some-parameter", "value")
     .build();
 ```
 
@@ -106,7 +121,7 @@ Response<?> newResponse = response.repeat();
 // Reading the HTML-Content from "https://www.youtube.com/watch?v=y6120QOlsfU"
 Response<String> response = Endpoint.forHost("youtube.com")
     .resolve("watch")
-    .buildGetRequest()
+    .getRequest()
     .parameter("v", "y6120QOlsfU")
     .build()
     .execute(new SimpleHTTPClient(), new StringResponseParser());
