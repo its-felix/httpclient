@@ -203,25 +203,23 @@ public class Request {
 
     private static abstract class ATemplate<T extends Builder<T>> implements Template {
 
-        protected final Endpoint endpoint;
-        protected final RequestMethod method;
-        protected final Charset charset;
-        protected final Map<String, String> urlParameters;
-        protected final Map<String, String> headers;
-        protected final RequestBody body;
+        private final Endpoint endpoint;
+        private final RequestMethod method;
+        private final Charset charset;
+        private final Map<String, String> urlParameters;
+        private final Map<String, String> headers;
 
-        public ATemplate(Endpoint endpoint, RequestMethod method, Charset charset, Map<String, String> urlParameters, Map<String, String> headers, RequestBody body) {
+        public ATemplate(Endpoint endpoint, RequestMethod method, Charset charset, Map<String, String> urlParameters, Map<String, String> headers) {
             this.endpoint = endpoint;
             this.method = method;
             this.charset = charset;
             this.urlParameters = urlParameters;
             this.headers = headers;
-            this.body = body;
         }
 
         @Override
         public T enrich() {
-            T builder = createBuilder().charset(this.charset);
+            T builder = createBuilder(this.endpoint, this.method).charset(this.charset);
 
             for (Map.Entry<String, String> entry : this.urlParameters.entrySet()) {
                 builder = builder.parameter(entry.getKey(), entry.getValue());
@@ -234,7 +232,7 @@ public class Request {
             return builder;
         }
 
-        protected abstract T createBuilder();
+        protected abstract T createBuilder(Endpoint endpoint, RequestMethod method);
     }
 
     private static class BuilderImpl extends ABuilder<BuilderImpl> {
@@ -245,7 +243,7 @@ public class Request {
 
         @Override
         public Template template() {
-            return new TemplateImpl(this.endpoint, this.method, this.charset, this.urlParameters, this.headers, this.body);
+            return new TemplateImpl(this.endpoint, this.method, this.charset, this.urlParameters, this.headers);
         }
 
         @Override
@@ -256,13 +254,13 @@ public class Request {
 
     private static class TemplateImpl extends ATemplate<BuilderImpl> {
 
-        public TemplateImpl(Endpoint endpoint, RequestMethod method, Charset charset, Map<String, String> urlParameters, Map<String, String> headers, RequestBody body) {
-            super(endpoint, method, charset, urlParameters, headers, body);
+        public TemplateImpl(Endpoint endpoint, RequestMethod method, Charset charset, Map<String, String> urlParameters, Map<String, String> headers) {
+            super(endpoint, method, charset, urlParameters, headers);
         }
 
         @Override
-        protected BuilderImpl createBuilder() {
-            return new BuilderImpl(this.endpoint, this.method);
+        protected BuilderImpl createBuilder(Endpoint endpoint, RequestMethod method) {
+            return new BuilderImpl(endpoint, method);
         }
     }
 
@@ -292,8 +290,11 @@ public class Request {
 
     private static class TemplateWithBodyImpl extends ATemplate<BuilderWithBodyImpl> implements TemplateWithBody {
 
+        private final RequestBody body;
+
         public TemplateWithBodyImpl(Endpoint endpoint, RequestMethod method, Charset charset, Map<String, String> urlParameters, Map<String, String> headers, RequestBody body) {
-            super(endpoint, method, charset, urlParameters, headers, body);
+            super(endpoint, method, charset, urlParameters, headers);
+            this.body = body;
         }
 
         @Override
@@ -302,8 +303,8 @@ public class Request {
         }
 
         @Override
-        protected BuilderWithBodyImpl createBuilder() {
-            return new BuilderWithBodyImpl(this.endpoint, this.method);
+        protected BuilderWithBodyImpl createBuilder(Endpoint endpoint, RequestMethod method) {
+            return new BuilderWithBodyImpl(endpoint, method);
         }
     }
 }
