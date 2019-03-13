@@ -1,46 +1,44 @@
 package io.medev.httpclient.client;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.get;
+import static com.github.tomakehurst.wiremock.client.WireMock.getRequestedFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
+import static com.github.tomakehurst.wiremock.client.WireMock.verify;
+import static io.medev.httpclient.Endpoint.HTTP;
+import static org.junit.Assert.assertEquals;
+
+import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import io.medev.httpclient.Endpoint;
 import io.medev.httpclient.RequestMethod;
 import io.medev.httpclient.Response;
 import io.medev.httpclient.parser.StringResponseParser;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
+import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
-import org.mockserver.integration.ClientAndServer;
-
-import static io.medev.httpclient.Endpoint.HTTP;
-import static org.junit.Assert.assertEquals;
-import static org.mockserver.integration.ClientAndServer.startClientAndServer;
-import static org.mockserver.model.HttpRequest.request;
-import static org.mockserver.model.HttpResponse.response;
 
 public class SimpleHTTPClientTest {
 
-    private static ClientAndServer mockServer;
-    private static Endpoint baseEndpoint;
+    @Rule
+    public WireMockRule wireMockRule = new WireMockRule(8080);
+    private Endpoint baseEndpoint;
 
-    @BeforeClass
-    public static void setupMockServer() {
-        mockServer = startClientAndServer();
-        baseEndpoint = Endpoint.forAddress(HTTP, mockServer.remoteAddress()).resolve(mockServer.contextPath());
-    }
-
-    @AfterClass
-    public static void shutdownMockServer() {
-        mockServer.stop();
+    @Before
+    public void setupMockServer() {
+        this.baseEndpoint = Endpoint.forHostAndPort(HTTP, "localhost", this.wireMockRule.port());
     }
 
     @Test
     public void simpleRequest() throws Exception {
-        mockServer.when(
-                request()
-                        .withMethod("GET")
-                        .withPath("/test")
-        ).respond(
-                response()
-                        .withStatusCode(200)
-                        .withBody("Success")
+        stubFor(
+              get(urlEqualTo("/test"))
+                    .willReturn(
+                          aResponse()
+                                .withStatus(200)
+                                .withHeader("Content-Type", "text/plain")
+                                .withBody("Success")
+                    )
         );
 
         Response<String> response = baseEndpoint.resolve("test")
@@ -50,5 +48,7 @@ public class SimpleHTTPClientTest {
 
         assertEquals(200, response.getResponseCode());
         assertEquals("Success", response.getValue());
+
+        verify(getRequestedFor(urlEqualTo("/test")));
     }
 }
