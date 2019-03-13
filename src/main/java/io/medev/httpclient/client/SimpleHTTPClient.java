@@ -8,12 +8,35 @@ import io.medev.httpclient.request.body.RequestBody;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.*;
 
 public class SimpleHTTPClient implements HTTPClient {
+
+    static {
+        try {
+            Field methodsField = HttpURLConnection.class.getDeclaredField("methods");
+
+            Field modifiersField = Field.class.getDeclaredField("modifiers");
+            modifiersField.setAccessible(true);
+            modifiersField.setInt(methodsField, methodsField.getModifiers() & ~Modifier.FINAL);
+
+            methodsField.setAccessible(true);
+
+            String[] oldMethods = (String[]) methodsField.get(null);
+            Set<String> methodsSet = new LinkedHashSet<>(Arrays.asList(oldMethods));
+            methodsSet.add("PATCH");
+            String[] newMethods = methodsSet.toArray(new String[0]);
+
+            methodsField.set(null, newMethods);
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     private final Map<String, String> headers;
 
@@ -58,25 +81,9 @@ public class SimpleHTTPClient implements HTTPClient {
 
         int responseCode = conn.getResponseCode();
         Map<String, List<String>> responseHeaders = conn.getHeaderFields();
-        String contentType = null;
-        String charset = null;
-
-        if (responseHeaders.containsKey("Content-Type")) {
-            List<String> contentTypeFields = responseHeaders.get("Content-Type");
-
-            if (!contentTypeFields.isEmpty()) {
-                contentType = contentTypeFields.get(0);
-            }
-
-            if (contentTypeFields.size() >= 2) {
-                String secondPart = contentTypeFields.get(1);
-                int index = secondPart.indexOf('=');
-
-                if (index != -1) {
-                    charset = secondPart.substring(index + 1);
-                }
-            }
-        }
+        String[] contentTypeFields = parseContentType(conn.getHeaderField("Content-Type"));
+        String contentType = contentTypeFields[0];
+        String charset = contentTypeFields[1];
 
         InputStreamSupplier inputStreamSupplier;
         if (responseCode < 400) {
@@ -97,10 +104,58 @@ public class SimpleHTTPClient implements HTTPClient {
         return new Response<>(this, request, parser, responseCode, responseHeaders, contentType, charset, value);
     }
 
+    public static String[] parseContentType(String contentTypeRaw) {
+        String contentType = null;
+        String charset = null;
+
+        if (contentTypeRaw != null) {
+            int indexOfSplitCharacter = contentTypeRaw.indexOf(';');
+
+            if (indexOfSplitCharacter != -1) {
+                contentType = contentTypeRaw.substring(0, indexOfSplitCharacter);
+
+                String rightPart = contentTypeRaw.substring(indexOfSplitCharacter + 1);
+                int indexOfCharset = rightPart.indexOf("charset");
+
+                if (indexOfCharset != -1) {
+                    rightPart = rightPart.substring(indexOfCharset);
+                    int indexOfEqualSign = rightPart.indexOf('=');
+
+                    if (indexOfEqualSign != -1) {
+                        String unclearedCharset = rightPart.substring(indexOfEqualSign + 1);
+
+                        if (unclearedCharset.charAt(0) == '"') {
+                            charset = readUntilChar(unclearedCharset.substring(1), '"');
+                        } else {
+                            charset = readUntilChar(unclearedCharset, ';');
+                        }
+                    }
+                }
+            } else {
+                contentType = contentTypeRaw;
+            }
+        }
+
+        return new String[]{contentType, charset};
+    }
+
+    private static String readUntilChar(String src, char target) {
+        // this length is most likely the resulting length
+        StringBuilder charsetBuilder = new StringBuilder(src.length() - 1);
+
+        int index = 0;
+        char currChar;
+
+        while (index < src.length() && (currChar = src.charAt(index++)) != target) {
+            charsetBuilder.append(currChar);
+        }
+
+        return charsetBuilder.toString();
+    }
+
     private static void addHeaders(HttpURLConnection conn, Map<String, String> headers) {
         for (Map.Entry<String, String> entry : headers.entrySet()) {
             conn.setRequestProperty(entry.getKey(), entry.getValue());
         }
     }
-
 }
