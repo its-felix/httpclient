@@ -101,7 +101,8 @@ public class SimpleHTTPClientTest {
 
     @Test
     public void requestWithBody() throws Exception {
-        // i'm not testing the RequestBody implementations here!
+        // I dont want to test the RequestBody-Implementations here
+        // I only want to test if the SimpleHTTPClient sends the implemented RequestBody correctly
         RequestBody body = new RequestBody() {
             @Override
             public String getContentType() {
@@ -110,7 +111,6 @@ public class SimpleHTTPClientTest {
 
             @Override
             public void write(OutputStream out) throws IOException {
-                // just some bytes i had in mind
                 out.write(new byte[]{-128, 12, 0, 69, 125});
             }
         };

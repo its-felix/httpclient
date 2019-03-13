@@ -109,48 +109,38 @@ public class SimpleHTTPClient implements HTTPClient {
         String charset = null;
 
         if (contentTypeRaw != null) {
-            int indexOfSplitCharacter = contentTypeRaw.indexOf(';');
+            String[] split = splitSafeAt(contentTypeRaw, ";");
+            contentType = split[0];
 
-            if (indexOfSplitCharacter != -1) {
-                contentType = contentTypeRaw.substring(0, indexOfSplitCharacter);
+            if (!split[1].isEmpty()) {
+                split = splitSafeAt(split[1], "charset=");
 
-                String rightPart = contentTypeRaw.substring(indexOfSplitCharacter + 1);
-                int indexOfCharset = rightPart.indexOf("charset");
-
-                if (indexOfCharset != -1) {
-                    rightPart = rightPart.substring(indexOfCharset);
-                    int indexOfEqualSign = rightPart.indexOf('=');
-
-                    if (indexOfEqualSign != -1) {
-                        String unclearedCharset = rightPart.substring(indexOfEqualSign + 1);
-
-                        if (unclearedCharset.charAt(0) == '"') {
-                            charset = readUntilChar(unclearedCharset.substring(1), '"');
-                        } else {
-                            charset = readUntilChar(unclearedCharset, ';');
-                        }
+                if (split[1].length() >= 1) {
+                    if (split[1].charAt(0) == '"') {
+                        charset = splitSafeAt(split[1].substring(1), "\"")[0];
+                    } else {
+                        charset = splitSafeAt(split[1], ";")[0];
                     }
                 }
-            } else {
-                contentType = contentTypeRaw;
             }
         }
 
         return new String[]{contentType, charset};
     }
 
-    private static String readUntilChar(String src, char target) {
-        // this length is most likely the resulting length
-        StringBuilder charsetBuilder = new StringBuilder(src.length() - 1);
+    private static String[] splitSafeAt(String src, String target) {
+        int index = src.indexOf(target);
+        String[] result = new String[2];
 
-        int index = 0;
-        char currChar;
-
-        while (index < src.length() && (currChar = src.charAt(index++)) != target) {
-            charsetBuilder.append(currChar);
+        if (index != -1) {
+            result[0] = src.substring(0, index);
+            result[1] = src.substring(index + target.length());
+        } else {
+            result[0] = src;
+            result[1] = "";
         }
 
-        return charsetBuilder.toString();
+        return result;
     }
 
     private static void addHeaders(HttpURLConnection conn, Map<String, String> headers) {
