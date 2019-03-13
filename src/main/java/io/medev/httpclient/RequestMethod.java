@@ -1,29 +1,52 @@
 package io.medev.httpclient;
 
-public enum RequestMethod {
+public interface RequestMethod {
 
-    HEAD("HEAD", false),
-    GET("GET", false),
-    POST("POST", true),
-    PUT("PUT", true),
-    PATCH("PATCH", true),
-    DELETE("DELETE", false);
+    RequestMethodWithoutBody HEAD = new RequestMethodWithoutBody("HEAD");
+    RequestMethodWithoutBody GET = new RequestMethodWithoutBody("GET");
+    RequestMethodWithBody POST = new RequestMethodWithBody("POST");
+    RequestMethodWithBody PUT = new RequestMethodWithBody("PUT");
+    RequestMethodWithBody PATCH = new RequestMethodWithBody("PATCH");
+    RequestMethodWithoutBody DELETE = new RequestMethodWithoutBody("DELETE");
 
-    public static final RequestMethod DEFAULT = GET;
+    String getName();
+    boolean supportsRequestBody();
 
-    private final String name;
-    private final boolean supportsRequestBody;
+    class RequestMethodWithBody implements RequestMethod {
 
-    RequestMethod(String name, boolean supportsRequestBody) {
-        this.name = name;
-        this.supportsRequestBody = supportsRequestBody;
+        private final String name;
+
+        private RequestMethodWithBody(String name) {
+            this.name = name;
+        }
+
+        @Override
+        public String getName() {
+            return this.name;
+        }
+
+        @Override
+        public boolean supportsRequestBody() {
+            return true;
+        }
     }
 
-    public String getName() {
-        return this.name;
-    }
+    class RequestMethodWithoutBody implements RequestMethod {
 
-    public boolean supportsRequestBody() {
-        return this.supportsRequestBody;
+        private final String name;
+
+        private RequestMethodWithoutBody(String name) {
+            this.name = name;
+        }
+
+        @Override
+        public String getName() {
+            return this.name;
+        }
+
+        @Override
+        public boolean supportsRequestBody() {
+            return false;
+        }
     }
 }

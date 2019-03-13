@@ -1,6 +1,7 @@
 package io.medev.httpclient.request;
 
 import io.medev.httpclient.Endpoint;
+import io.medev.httpclient.RequestMethod;
 import io.medev.httpclient.request.body.RequestBody;
 import org.junit.Test;
 
@@ -12,7 +13,7 @@ public class RequestTest {
     @Test
     public void simpleGetRequest() {
         Request request = Endpoint.forHost(HTTPS, "me-dev.io")
-                .getRequest()
+                .request(RequestMethod.GET)
                 .build();
 
         assertEquals("https://me-dev.io", request.getRequestURL().toString());
@@ -21,7 +22,7 @@ public class RequestTest {
     @Test
     public void getRequestWithParameters() {
         Request request = Endpoint.forHost(HTTPS, "me-dev.io")
-                .getRequest()
+                .request(RequestMethod.GET)
                 .parameter("param1", "value1")
                 .parameter("param2")
                 .parameter("param3")
@@ -33,7 +34,7 @@ public class RequestTest {
     @Test
     public void getRequestWithParametersFromEndpointAndRequest() {
         Request request = Endpoint.forURL("https://me-dev.io?param0=value0")
-                .getRequest()
+                .request(RequestMethod.GET)
                 .parameter("param1", "value1")
                 .parameter("param2")
                 .parameter("param3")
@@ -45,7 +46,7 @@ public class RequestTest {
     @Test
     public void template() {
         Request.Template template = Endpoint.forHost(HTTPS, "me-dev.io")
-                .getRequest()
+                .request(RequestMethod.GET)
                 .parameter("somePredefinedParameter", "value")
                 .template();
 
@@ -59,7 +60,7 @@ public class RequestTest {
     @Test
     public void changesDontChangeTheTemplate() {
         Request.Template template = Endpoint.forHost(HTTPS, "me-dev.io")
-                .getRequest()
+                .request(RequestMethod.GET)
                 .parameter("param0", "value0")
                 .template();
 
@@ -82,7 +83,7 @@ public class RequestTest {
         RequestBody body2 = RequestBody.forText("");
 
         Request.TemplateWithBody template = Endpoint.forHost(HTTPS, "me-dev.io")
-                .postRequest()
+                .request(RequestMethod.POST)
                 .body(body1)
                 .template();
 

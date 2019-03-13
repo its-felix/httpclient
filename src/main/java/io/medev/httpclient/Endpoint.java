@@ -3,9 +3,7 @@ package io.medev.httpclient;
 import io.medev.httpclient.request.Request;
 
 import java.io.UnsupportedEncodingException;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLEncoder;
+import java.net.*;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -30,6 +28,29 @@ public class Endpoint {
         }
 
         return new Endpoint(url);
+    }
+
+    public static Endpoint forHostAndPort(String protocol, String host, int port) {
+        URL url;
+        try {
+            url = new URL(protocol, host, port, "");
+        } catch (MalformedURLException e) {
+            throw new RuntimeException(e);
+        }
+
+        return new Endpoint(url);
+    }
+
+    public static Endpoint forHostAndPort(String host, int port) {
+        return forHostAndPort(HTTPS, host, port);
+    }
+
+    public static Endpoint forAddress(String protocol, InetSocketAddress address) {
+        return forHostAndPort(address.getHostString(), address.getPort());
+    }
+
+    public static Endpoint forAddress(InetSocketAddress address) {
+        return forAddress(HTTPS, address);
     }
 
     public static Endpoint forHost(String protocol, String host) {
@@ -77,28 +98,12 @@ public class Endpoint {
         return new Endpoint(url);
     }
 
-    public Request.Builder<?> headRequest() {
-        return Request.Builder.create(this, RequestMethod.HEAD);
+    public Request.Builder<?> request(RequestMethod.RequestMethodWithoutBody method) {
+        return Request.Builder.create(this, method);
     }
 
-    public Request.Builder<?> getRequest() {
-        return Request.Builder.create(this, RequestMethod.GET);
-    }
-
-    public Request.BuilderWithBody<?> postRequest() {
-        return Request.BuilderWithBody.create(this, RequestMethod.POST);
-    }
-
-    public Request.BuilderWithBody<?> putRequest() {
-        return Request.BuilderWithBody.create(this, RequestMethod.PUT);
-    }
-
-    public Request.BuilderWithBody<?> patchRequest() {
-        return Request.BuilderWithBody.create(this, RequestMethod.PATCH);
-    }
-
-    public Request.Builder<?> deleteRequest() {
-        return Request.Builder.create(this, RequestMethod.DELETE);
+    public Request.BuilderWithBody<?> request(RequestMethod.RequestMethodWithBody method) {
+        return Request.BuilderWithBody.create(this, method);
     }
 
     private static String encode(String str) {
