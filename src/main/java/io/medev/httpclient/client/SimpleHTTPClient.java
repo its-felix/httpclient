@@ -29,7 +29,11 @@ public class SimpleHTTPClient implements HTTPClient {
 
             String[] oldMethods = (String[]) methodsField.get(null);
             Set<String> methodsSet = new LinkedHashSet<>(Arrays.asList(oldMethods));
-            methodsSet.add("PATCH");
+
+            for (RequestMethod method : RequestMethod.values()) {
+                methodsSet.add(method.getName());
+            }
+
             String[] newMethods = methodsSet.toArray(new String[0]);
 
             methodsField.set(null, newMethods);

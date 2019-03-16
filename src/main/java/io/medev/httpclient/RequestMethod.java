@@ -12,6 +12,11 @@ public interface RequestMethod {
     String getName();
     boolean supportsRequestBody();
 
+    RequestMethod[] VALUES = new RequestMethod[]{HEAD, GET, POST, PUT, PATCH, DELETE};
+    static RequestMethod[] values() {
+        return VALUES;
+    }
+
     class RequestMethodWithBody implements RequestMethod {
 
         private final String name;
