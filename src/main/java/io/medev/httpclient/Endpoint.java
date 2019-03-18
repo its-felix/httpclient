@@ -106,6 +106,30 @@ public class Endpoint {
         return Request.BuilderWithBody.create(this, method);
     }
 
+    public Request.Builder<?> head() {
+        return request(RequestMethod.HEAD);
+    }
+
+    public Request.Builder<?> get() {
+        return request(RequestMethod.GET);
+    }
+
+    public Request.BuilderWithBody<?> post() {
+        return request(RequestMethod.POST);
+    }
+
+    public Request.BuilderWithBody<?> put() {
+        return request(RequestMethod.PUT);
+    }
+
+    public Request.BuilderWithBody<?> patch() {
+        return request(RequestMethod.PATCH);
+    }
+
+    public Request.Builder<?> delete() {
+        return request(RequestMethod.DELETE);
+    }
+
     private static String encode(String str) {
         try {
             return URLEncoder.encode(str, "UTF-8");

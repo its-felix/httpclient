@@ -13,7 +13,7 @@ public class RequestTest {
     @Test
     public void simpleGetRequest() {
         Request request = Endpoint.forHost(HTTPS, "me-dev.io")
-                .request(RequestMethod.GET)
+                .get()
                 .build();
 
         assertEquals("https://me-dev.io", request.getRequestURL().toString());
@@ -22,7 +22,7 @@ public class RequestTest {
     @Test
     public void getRequestWithParameters() {
         Request request = Endpoint.forHost(HTTPS, "me-dev.io")
-                .request(RequestMethod.GET)
+                .get()
                 .parameter("param1", "value1")
                 .parameter("param2")
                 .parameter("param3")
@@ -34,7 +34,7 @@ public class RequestTest {
     @Test
     public void getRequestWithParametersFromEndpointAndRequest() {
         Request request = Endpoint.forURL("https://me-dev.io?param0=value0")
-                .request(RequestMethod.GET)
+                .get()
                 .parameter("param1", "value1")
                 .parameter("param2")
                 .parameter("param3")
@@ -46,7 +46,7 @@ public class RequestTest {
     @Test
     public void template() {
         Request.Template template = Endpoint.forHost(HTTPS, "me-dev.io")
-                .request(RequestMethod.GET)
+                .get()
                 .parameter("somePredefinedParameter", "value")
                 .template();
 
@@ -60,7 +60,7 @@ public class RequestTest {
     @Test
     public void changesDontChangeTheTemplate() {
         Request.Template template = Endpoint.forHost(HTTPS, "me-dev.io")
-                .request(RequestMethod.GET)
+                .get()
                 .parameter("param0", "value0")
                 .template();
 
@@ -83,7 +83,7 @@ public class RequestTest {
         RequestBody body2 = RequestBody.forText("");
 
         Request.TemplateWithBody template = Endpoint.forHost(HTTPS, "me-dev.io")
-                .request(RequestMethod.POST)
+                .post()
                 .body(body1)
                 .template();
 

@@ -44,8 +44,7 @@ public class SimpleHTTPClientTest {
     @Test
     public void simpleHeadRequest() throws Exception {
         this.baseEndpoint.resolve("test")
-                .request(RequestMethod.HEAD)
-                .build()
+                .head()
                 .execute(this.client, this.parser);
 
         verify(exactly(1), headRequestedFor(urlEqualTo("/test")));
@@ -54,8 +53,7 @@ public class SimpleHTTPClientTest {
     @Test
     public void simpleGetRequest() throws Exception {
         this.baseEndpoint.resolve("test")
-                .request(RequestMethod.GET)
-                .build()
+                .get()
                 .execute(this.client, this.parser);
 
         verify(exactly(1), getRequestedFor(urlEqualTo("/test")));
@@ -64,8 +62,7 @@ public class SimpleHTTPClientTest {
     @Test
     public void simplePostRequest() throws Exception {
         this.baseEndpoint.resolve("test")
-                .request(RequestMethod.POST)
-                .build()
+                .post()
                 .execute(this.client, this.parser);
 
         verify(exactly(1), postRequestedFor(urlEqualTo("/test")));
@@ -74,8 +71,7 @@ public class SimpleHTTPClientTest {
     @Test
     public void simplePutRequest() throws Exception {
         this.baseEndpoint.resolve("test")
-                .request(RequestMethod.PUT)
-                .build()
+                .put()
                 .execute(this.client, this.parser);
 
         verify(exactly(1), putRequestedFor(urlEqualTo("/test")));
@@ -84,8 +80,7 @@ public class SimpleHTTPClientTest {
     @Test
     public void simplePatchRequest() throws Exception {
         this.baseEndpoint.resolve("test")
-                .request(RequestMethod.PATCH)
-                .build()
+                .patch()
                 .execute(this.client, this.parser);
 
         verify(exactly(1), patchRequestedFor(urlEqualTo("/test")));
@@ -95,8 +90,7 @@ public class SimpleHTTPClientTest {
     @Test
     public void simpleDeleteRequest() throws Exception {
         this.baseEndpoint.resolve("test")
-                .request(RequestMethod.DELETE)
-                .build()
+                .delete()
                 .execute(this.client, this.parser);
 
         verify(exactly(1), deleteRequestedFor(urlEqualTo("/test")));
@@ -120,9 +114,8 @@ public class SimpleHTTPClientTest {
         };
 
         this.baseEndpoint.resolve("test")
-                .request(RequestMethod.POST)
+                .post()
                 .body(body)
-                .build()
                 .execute(this.client, this.parser);
 
         verify(exactly(1), postRequestedFor(urlEqualTo("/test"))
@@ -133,9 +126,8 @@ public class SimpleHTTPClientTest {
     @Test
     public void requestHeadersOnRequest() throws Exception {
         this.baseEndpoint.resolve("test")
-                .request(RequestMethod.GET)
+                .get()
                 .header("some-header", "some-value")
-                .build()
                 .execute(this.client, this.parser);
 
         verify(exactly(1), getRequestedFor(urlEqualTo("/test"))
@@ -147,8 +139,7 @@ public class SimpleHTTPClientTest {
         HTTPClient client = new SimpleHTTPClient(Collections.singletonMap("some-header", "some-value"));
 
         this.baseEndpoint.resolve("test")
-                .request(RequestMethod.GET)
-                .build()
+                .get()
                 .execute(client, this.parser);
 
         verify(exactly(1), getRequestedFor(urlEqualTo("/test"))
@@ -160,9 +151,8 @@ public class SimpleHTTPClientTest {
         HTTPClient client = new SimpleHTTPClient(Collections.singletonMap("some-header", "some-value"));
 
         this.baseEndpoint.resolve("test")
-                .request(RequestMethod.GET)
+                .get()
                 .header("some-header", "another-value")
-                .build()
                 .execute(client, this.parser);
 
         verify(exactly(1), getRequestedFor(urlEqualTo("/test"))
@@ -174,8 +164,7 @@ public class SimpleHTTPClientTest {
         stubFor(get(urlEqualTo("/test")).willReturn(aResponse().withStatus(210)));
 
         Response<Void> response = this.baseEndpoint.resolve("test")
-                .request(RequestMethod.GET)
-                .build()
+                .get()
                 .execute(this.client, this.parser);
 
         assertEquals(210, response.getResponseCode());
@@ -194,8 +183,7 @@ public class SimpleHTTPClientTest {
         );
 
         Response<Void> response = this.baseEndpoint.resolve("test")
-                .request(RequestMethod.GET)
-                .build()
+                .get()
                 .execute(this.client, this.parser);
 
         Map<String, List<String>> headers = response.getHeaders();

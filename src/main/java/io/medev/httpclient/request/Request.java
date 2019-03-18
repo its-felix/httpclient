@@ -129,6 +129,9 @@ public class Request {
         T header(String key, String value);
         Template template();
         Request build();
+        default <R> Response<R> execute(HTTPClient client, ResponseParser<R> parser) throws IOException {
+            return build().execute(client, parser);
+        }
     }
 
     public interface Template {
