@@ -3,6 +3,7 @@ package io.medev.httpclient.client;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import io.medev.httpclient.Endpoint;
 import io.medev.httpclient.RequestMethod;
+import io.medev.httpclient.Response;
 import io.medev.httpclient.parser.NoOpResponseParser;
 import io.medev.httpclient.parser.ResponseParser;
 import io.medev.httpclient.request.body.RequestBody;
@@ -12,12 +13,15 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static io.medev.httpclient.Endpoint.HTTP;
 import static io.medev.httpclient.client.SimpleHTTPClient.parseContentType;
-import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.*;
 
 public class SimpleHTTPClientTest {
 
@@ -124,6 +128,89 @@ public class SimpleHTTPClientTest {
         verify(exactly(1), postRequestedFor(urlEqualTo("/test"))
                 .withHeader("Content-Type", equalTo("my-content-type"))
                 .withRequestBody(binaryEqualTo(new byte[]{-128, 12, 0, 69, 125})));
+    }
+
+    @Test
+    public void requestHeadersOnRequest() throws Exception {
+        this.baseEndpoint.resolve("test")
+                .request(RequestMethod.GET)
+                .header("some-header", "some-value")
+                .build()
+                .execute(this.client, this.parser);
+
+        verify(exactly(1), getRequestedFor(urlEqualTo("/test"))
+                .withHeader("some-header", equalTo("some-value")));
+    }
+
+    @Test
+    public void requestHeadersOnClient() throws Exception {
+        HTTPClient client = new SimpleHTTPClient(Collections.singletonMap("some-header", "some-value"));
+
+        this.baseEndpoint.resolve("test")
+                .request(RequestMethod.GET)
+                .build()
+                .execute(client, this.parser);
+
+        verify(exactly(1), getRequestedFor(urlEqualTo("/test"))
+                .withHeader("some-header", equalTo("some-value")));
+    }
+
+    @Test
+    public void requestHeadersOnRequestOverrideClientHeaders() throws Exception {
+        HTTPClient client = new SimpleHTTPClient(Collections.singletonMap("some-header", "some-value"));
+
+        this.baseEndpoint.resolve("test")
+                .request(RequestMethod.GET)
+                .header("some-header", "another-value")
+                .build()
+                .execute(client, this.parser);
+
+        verify(exactly(1), getRequestedFor(urlEqualTo("/test"))
+                .withHeader("some-header", equalTo("another-value")));
+    }
+
+    @Test
+    public void responseCode() throws Exception {
+        stubFor(get(urlEqualTo("/test")).willReturn(aResponse().withStatus(210)));
+
+        Response<Void> response = this.baseEndpoint.resolve("test")
+                .request(RequestMethod.GET)
+                .build()
+                .execute(this.client, this.parser);
+
+        assertEquals(210, response.getResponseCode());
+
+        verify(exactly(1), getRequestedFor(urlEqualTo("/test")));
+    }
+
+    @Test
+    public void responseHeaders() throws Exception {
+        stubFor(get(urlEqualTo("/test"))
+                .willReturn(
+                        aResponse()
+                                .withHeader("some-header", "some-value")
+                                .withHeader("another-header", "value0", "value1", "value2")
+                )
+        );
+
+        Response<Void> response = this.baseEndpoint.resolve("test")
+                .request(RequestMethod.GET)
+                .build()
+                .execute(this.client, this.parser);
+
+        Map<String, List<String>> headers = response.getHeaders();
+
+        assertNotNull(headers);
+        assertNotNull(headers.get("some-header"));
+        assertEquals(1, headers.get("some-header").size());
+        assertEquals("some-value", headers.get("some-header").get(0));
+        assertNotNull(headers.get("another-header"));
+        assertEquals(3, headers.get("another-header").size());
+        assertEquals("value2", headers.get("another-header").get(0));
+        assertEquals("value1", headers.get("another-header").get(1));
+        assertEquals("value0", headers.get("another-header").get(2));
+
+        verify(exactly(1), getRequestedFor(urlEqualTo("/test")));
     }
 
     @Test
