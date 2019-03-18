@@ -2,7 +2,6 @@ package io.medev.httpclient.client;
 
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import io.medev.httpclient.Endpoint;
-import io.medev.httpclient.RequestMethod;
 import io.medev.httpclient.Response;
 import io.medev.httpclient.parser.NoOpResponseParser;
 import io.medev.httpclient.parser.ResponseParser;
