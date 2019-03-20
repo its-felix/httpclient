@@ -17,7 +17,7 @@ public interface RequestBody {
     void write(OutputStream out) throws IOException;
 
     static RequestBody forFile(String contentType, File file) {
-        return new BinaryRequestBody(contentType, () -> new FileInputStream(file));
+        return new InputStreamRequestBody(contentType, () -> new FileInputStream(file));
     }
 
     static RequestBody forFile(File file) {
@@ -25,7 +25,7 @@ public interface RequestBody {
     }
 
     static RequestBody forBytes(String contentType, byte[] bytes) {
-        return new BinaryRequestBody(contentType, () -> new ByteArrayInputStream(bytes));
+        return new ByteArrayRequestBody(contentType, bytes);
     }
 
     static RequestBody forText(String contentType, String text, Charset charset) {

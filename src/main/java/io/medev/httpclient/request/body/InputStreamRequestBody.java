@@ -6,12 +6,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-public class BinaryRequestBody implements RequestBody {
+public class InputStreamRequestBody implements RequestBody {
 
     private final String contentType;
     private final InputStreamSupplier inputStreamSupplier;
 
-    public BinaryRequestBody(String contentType, InputStreamSupplier inputStreamSupplier) {
+    public InputStreamRequestBody(String contentType, InputStreamSupplier inputStreamSupplier) {
         this.contentType = contentType;
         this.inputStreamSupplier = inputStreamSupplier;
     }

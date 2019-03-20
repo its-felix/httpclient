@@ -2,11 +2,11 @@ package io.medev.httpclient.request.body;
 
 import io.medev.httpclient.InputStreamSupplier;
 
-public class BinaryFormDataParameter extends BinaryRequestBody implements FormDataParameter {
+public class InputStreamFormDataParameter extends InputStreamRequestBody implements FormDataParameter {
 
     private final String name;
 
-    public BinaryFormDataParameter(String name, String contentType, InputStreamSupplier inputStreamSupplier) {
+    public InputStreamFormDataParameter(String name, String contentType, InputStreamSupplier inputStreamSupplier) {
         super(contentType, inputStreamSupplier);
         this.name = name;
     }

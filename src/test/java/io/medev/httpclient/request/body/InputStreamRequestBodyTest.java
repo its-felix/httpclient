@@ -10,12 +10,13 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
+import java.io.ByteArrayInputStream;
+
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static io.medev.httpclient.Endpoint.HTTP;
-import static junit.framework.TestCase.assertTrue;
 
-public class BinaryRequestBodyTest {
+public class InputStreamRequestBodyTest {
 
     @Rule
     public WireMockRule wireMockRule = new WireMockRule(wireMockConfig().dynamicPort().dynamicHttpsPort(), false);
@@ -36,9 +37,7 @@ public class BinaryRequestBodyTest {
     @Test
     public void simpleBinaryRequest() throws Exception {
         byte[] bytes = new byte[]{123, 69, -127, 5, 3};
-        RequestBody body = RequestBody.forBytes("application/octet-stream", bytes);
-
-        assertTrue(body instanceof BinaryRequestBody);
+        RequestBody body = new InputStreamRequestBody("application/octet-stream", () -> new ByteArrayInputStream(bytes));
 
         this.baseEndpoint.resolve("test")
                 .post()
@@ -47,21 +46,5 @@ public class BinaryRequestBodyTest {
 
         verify(exactly(1), postRequestedFor(urlEqualTo("/test"))
                 .withRequestBody(binaryEqualTo(bytes)));
-    }
-
-    @Test
-    public void textBinaryRequest() throws Exception {
-        String text = "Hello World";
-        RequestBody body = RequestBody.forText(text);
-
-        assertTrue(body instanceof BinaryRequestBody);
-
-        this.baseEndpoint.resolve("test")
-                .post()
-                .body(body)
-                .execute(this.client, this.parser);
-
-        verify(exactly(1), postRequestedFor(urlEqualTo("/test"))
-                .withRequestBody(equalTo(text)));
     }
 }
