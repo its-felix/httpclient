@@ -3,10 +3,9 @@ package dev.codeflush.httpclient.client;
 import dev.codeflush.httpclient.InputStreamSupplier;
 import dev.codeflush.httpclient.RequestMethod;
 import dev.codeflush.httpclient.Response;
-import dev.codeflush.httpclient.request.body.RequestBody;
-import io.medev.httpclient.*;
 import dev.codeflush.httpclient.parser.ResponseParser;
 import dev.codeflush.httpclient.request.Request;
+import dev.codeflush.httpclient.request.body.RequestBody;
 
 import java.io.IOException;
 import java.io.InputStream;
